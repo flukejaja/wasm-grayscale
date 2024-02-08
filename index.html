@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Processing with Rust and WebAssembly</title>
+</head>
+<body>
+    <input type="file" id="imageInput">
+    <button id="grayscaleBtn">Apply Grayscale</button>
+    <canvas id="canvas"></canvas>
+
+    <script type="module">
+        import init, { apply_grayscale } from './pkg/rust_wasm_example.js';
+        async function run() {
+            await init();
+            document.getElementById('grayscaleBtn').addEventListener('click', async () => {
+                const input = document.getElementById('imageInput');
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                if (input.files && input.files[0]) {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(input.files[0]);
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                        const grayPixels = apply_grayscale(imageData.data, img.width, img.height);
+                        const grayImageData = new ImageData(new Uint8ClampedArray(grayPixels), img.width, img.height);
+                        ctx.putImageData(grayImageData, 0, 0);
+                    };
+                }
+            });
+        }
+        run();
+    </script>
+</body>
+</html>
